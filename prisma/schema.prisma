@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator zod {
+  provider = "zod-prisma-types"
+  output   = "./generated/zod" // default is ./generated/zod
+}
+
+model User {
+  id      String   @id @default(cuid()) /// @zod.string.cuid()
+  email   String   @unique /// @zod.string.email({ message: "Invalid email address" })
+  /// some other comment 
+  /// @zod.string.min(1).max(100) some message after
+  name    String?
+  /// @zod.object.array(.length(2, { message: "error" }).min(1).max(2).nonempty({ message: "error" }))
+  posts   Post[]
+  profile Profile?
+
+  scalarList String[]
+
+  lat Float
+  lng Float
+
+  location Location? @relation(fields: [lat, lng], references: [lat, lng])
+}
+
+model Post {
+  id             Int     @id @default(autoincrement())
+  title          String
+  content        String?
+  published      Boolean @default(false)
+  author         User    @relation(fields: [authorId], references: [id])
+  authorId       String
+  jsonOpt        Json?
+  anotherJsonOpt Json?
+}
+
+model Profile {
+  id     Int    @id @default(autoincrement())
+  bio    String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+}
+
+model Location {
+  lat  Float
+  lng  Float
+  User User[]
+
+  @@id([lat, lng])
+}
